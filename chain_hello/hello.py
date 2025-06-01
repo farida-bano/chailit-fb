@@ -3,21 +3,15 @@ from agents import Agent, RunConfig, Runner, AsyncOpenAI, OpenAIChatCompletionsM
 from dotenv import load_dotenv, find_dotenv
 import os
 
-# Load environment variables
 load_dotenv(find_dotenv())
 
-# Get API key from environment
+# use api key
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 
-# Validate API key exists
-if not gemini_api_key:
-    raise ValueError("GEMINI_API_KEY environment variable not set. "
-                     "Please set it in your .env file or environment variables.")
-
-# Correct Gemini configuration
+# Correct configuration for Gemini's OpenAI-compatible endpoint
 provider = AsyncOpenAI(
-    api_key=gemini_api_key,  # Use the variable here
-    base_url="https://generativelanguage.googleapis.com/v1beta",  # Correct endpoint
+    api_key=gemini_api_key,
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
 
 model = OpenAIChatCompletionsModel(
@@ -38,13 +32,17 @@ agent1 = Agent(
 
 @cl.on_chat_start
 async def handle_chat_start():
+    # Fixed: Use cl.Message instead of cl.message and send() method
     await cl.Message(content="Hello! I'm Panaversity Support Agent. How can I assist you today?").send()
 
 @cl.on_message
 async def handle_message(message: cl.Message):
+    # Process message directly without history
     result = await Runner.run(
         agent1,
-        input=message.content,
+        input=message.content,  # Pass actual message content
         run_config=run_config,
     )
+    
+    # Send response directly
     await cl.Message(content=result.final_output).send()
